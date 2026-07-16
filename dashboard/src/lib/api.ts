@@ -144,8 +144,8 @@ export const api = {
     fd.append('file', file)
     fd.append('conf', String(conf))
     fd.append('weights_path', weightsPath)
-
-    fetch('/api/detect/video/stream', {
+    const API = import.meta.env.VITE_API_URL;
+    fetch(`${API}/api/detect/video/stream`, {
       method: 'POST',
       body: fd,
       signal: controller.signal,
