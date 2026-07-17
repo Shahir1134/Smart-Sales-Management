@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const http = axios.create({ baseURL: '/api' })
+const http = axios.create({ baseURL: import.meta.env.VITE_API_URL + '/api' })
 
 export interface HealthStatus {
   status: string
@@ -89,7 +89,7 @@ export interface PipelineEvent {
 
 export interface ChatResponse {
   reply: string
-  action?: { type: string; [k: string]: unknown } | null
+  action?: { type: string;[k: string]: unknown } | null
   chat_history: { role: string; content: string }[]
 }
 
@@ -100,10 +100,10 @@ export interface ThresholdUpdate {
 }
 
 export type DetectionProgressEvent =
-  | { type: 'start';    total_frames: number }
+  | { type: 'start'; total_frames: number }
   | { type: 'progress'; frame: number; total: number; pct: number }
-  | { type: 'done';     inventory: InventoryData }
-  | { type: 'error';    detail: string }
+  | { type: 'done'; inventory: InventoryData }
+  | { type: 'error'; detail: string }
 
 // ── API METHODS ────────────────────────────────────────────────────────────
 export const api = {
@@ -144,8 +144,8 @@ export const api = {
     fd.append('file', file)
     fd.append('conf', String(conf))
     fd.append('weights_path', weightsPath)
-
-    fetch('/api/detect/video/stream', {
+    const API = import.meta.env.VITE_API_URL;
+    fetch(`${API}/api/detect/video/stream`, {
       method: 'POST',
       body: fd,
       signal: controller.signal,
@@ -171,7 +171,7 @@ export const api = {
             onEvent(event)
             if (event.type === 'done') onDone(event.inventory)
             if (event.type === 'error') onError(event.detail)
-          } catch {}
+          } catch { }
         }
       }
     }).catch(err => {

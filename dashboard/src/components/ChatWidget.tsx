@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send, Zap } from 'lucide-react'
+import { MessageCircle, X, Send } from 'lucide-react'
 import { api } from '../lib/api'
 import { cn } from '../lib/utils'
 import { Spinner } from './ui'
@@ -9,23 +9,35 @@ interface Message {
   content: string
 }
 
+const SUGGESTED_PROMPTS = [
+  'What needs restocking?',
+  'Show discount candidates',
+  'Which products are expiring?',
+]
+
 export function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: '👋 Hi! Ask me about inventory, expiry, sales trends, discounts or restocking.' }
+    { role: 'assistant', content: 'Hello! I\'m ShelfSense AI. Ask me about inventory levels, expiring products, sales trends, or restock recommendations.' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (open) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => inputRef.current?.focus(), 300)
+    }
   }, [messages, open])
 
-  async function send() {
-    const msg = input.trim()
+  async function send(overrideMsg?: string) {
+    const msg = (overrideMsg ?? input).trim()
     if (!msg || loading) return
     setInput('')
+    setShowSuggestions(false)
     setMessages(prev => [...prev, { role: 'user', content: msg }])
     setLoading(true)
     try {
@@ -33,7 +45,7 @@ export function ChatWidget() {
       setMessages(prev => [...prev, { role: 'assistant', content: res.reply }])
     } catch (e: unknown) {
       const err = e instanceof Error ? e.message : 'Unknown error'
-      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Error: ${err}` }])
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err}` }])
     } finally {
       setLoading(false)
     }
@@ -135,6 +147,8 @@ export function ChatWidget() {
               </div>
             </div>
           ))}
+
+          {/* Typing indicator */}
           {loading && (
             <div className="flex justify-start">
               <div
@@ -151,6 +165,23 @@ export function ChatWidget() {
               </div>
             </div>
           )}
+
+          {/* Suggested prompts */}
+          {showSuggestions && messages.length === 1 && !loading && (
+            <div className="flex flex-col gap-1.5 mt-1">
+              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Suggested</p>
+              {SUGGESTED_PROMPTS.map(prompt => (
+                <button
+                  key={prompt}
+                  onClick={() => send(prompt)}
+                  className="text-left text-[12px] text-gray-600 hover:text-indigo-600 bg-gray-50 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 rounded-lg px-3 py-2 transition-all duration-100 font-medium"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div ref={bottomRef} />
         </div>
 
@@ -160,6 +191,7 @@ export function ChatWidget() {
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
           <input
+            ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send()}
@@ -174,7 +206,7 @@ export function ChatWidget() {
             onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
           />
           <button
-            onClick={send}
+            onClick={() => send()}
             disabled={loading || !input.trim()}
             className="rounded-xl flex items-center justify-center text-white disabled:opacity-40 hover:opacity-90 active:scale-95 transition-all flex-shrink-0"
             style={{

@@ -76,7 +76,7 @@ function FrameProgress({ frame, total, pct, onCancel }: FrameProgressProps) {
         </div>
         <div className="font-mono-custom text-[20px] font-bold tabular-nums" style={{ color: '#94A3B8' }}>
           {pct.toFixed(1)}%
-        </div>
+        </span>
       </div>
 
       {/* Progress bar */}
@@ -124,7 +124,7 @@ function FrameStrip({ pct }: { pct: number }) {
   const COLS = 20
   const filled = Math.round((pct / 100) * COLS)
   return (
-    <div className="flex gap-0.5 mt-1">
+    <div className="flex gap-0.5">
       {Array.from({ length: COLS }, (_, i) => (
         <div
           key={i}
@@ -163,13 +163,11 @@ export default function InventoryMonitoring() {
     }
   }, [inventory, setInventory])
 
-  // Detection progress state
   const [detecting, setDetecting] = useState(false)
   const [totalFrames, setTotalFrames] = useState(0)
   const [currentFrame, setCurrentFrame] = useState(0)
   const [pct, setPct] = useState(0)
   const abortRef = useRef<AbortController | null>(null)
-
   const videoInputRef = useRef<HTMLInputElement>(null)
 
   const items = inventory
@@ -178,7 +176,6 @@ export default function InventoryMonitoring() {
   const grandTotal = inventory?.grand_total ?? items.reduce((s, [, v]) => s + v, 0)
   const lowCount = items.filter(([, v]) => v < threshold).length
 
-  // Reset progress when video file changes
   useEffect(() => {
     setCurrentFrame(0)
     setPct(0)
@@ -200,24 +197,22 @@ export default function InventoryMonitoring() {
     setCurrentFrame(0)
     setPct(0)
     setTotalFrames(0)
-    setMessage({ type: 'info', text: '⏳ Uploading video and starting YOLO analysis…' })
+    setMessage({ type: 'info', text: 'Uploading video and starting YOLO analysis…' })
 
     const controller = api.detectVideoStream(
       videoFile,
       conf,
       weights,
-      // onEvent
       (event: DetectionProgressEvent) => {
         if (event.type === 'start') {
           setTotalFrames(event.total_frames)
-          setMessage({ type: 'info', text: `📹 Scanning ${event.total_frames.toLocaleString()} frames…` })
+          setMessage({ type: 'info', text: `Scanning ${event.total_frames.toLocaleString()} frames…` })
         } else if (event.type === 'progress') {
           setCurrentFrame(event.frame)
           setPct(event.pct)
           setTotalFrames(event.total)
         }
       },
-      // onDone
       (inv) => {
         setInventory(inv)
         setDetecting(false)
@@ -225,20 +220,17 @@ export default function InventoryMonitoring() {
         const skuCount = Object.keys(inv).filter(k => k !== 'grand_total').length
         setMessage({
           type: 'success',
-          text: `✅ Detection complete! Found ${skuCount} SKUs with ${inv.grand_total} total units.`,
+          text: `Detection complete! Found ${skuCount} SKUs with ${inv.grand_total} total units.`,
         })
       },
-      // onError
       (detail) => {
         setDetecting(false)
-        setMessage({ type: 'error', text: `❌ Detection failed: ${detail}` })
+        setMessage({ type: 'error', text: `Detection failed: ${detail}` })
       }
     )
 
     abortRef.current = controller
   }
-
-  // Removed loadSample and loadJson as requested to restrict to live YOLO analysis only
 
   return (
     <div className="space-y-6">
@@ -258,7 +250,6 @@ export default function InventoryMonitoring() {
         </Alert>
       )}
 
-      {/* ── FRAME PROGRESS (shows while detecting) ── */}
       {detecting && (
         <FrameProgress
           frame={currentFrame}
@@ -317,7 +308,7 @@ export default function InventoryMonitoring() {
             </div>
           </div>
 
-          {/* Sliders */}
+          {/* Controls */}
           <div className="mt-5 space-y-4">
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: '#475569' }}>
@@ -332,7 +323,14 @@ export default function InventoryMonitoring() {
                 />
                 <span className="font-mono-custom text-sm font-bold w-10 text-right" style={{ color: '#10B981' }}>{conf}</span>
               </div>
+              <input
+                type="range" min={0.1} max={0.95} step={0.05} value={conf}
+                onChange={e => setConf(+e.target.value)}
+                disabled={detecting}
+                className="w-full"
+              />
             </div>
+
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: '#475569' }}>
                 YOLO Weights Path
@@ -352,7 +350,6 @@ export default function InventoryMonitoring() {
               />
             </div>
 
-            {/* Run / Cancel button */}
             {detecting ? (
               <button
                 onClick={cancelDetection}
@@ -363,14 +360,14 @@ export default function InventoryMonitoring() {
                   color: '#F87171'
                 }}
               >
-                <X size={15} /> Cancel Detection
+                <X size={14} /> Cancel Detection
               </button>
             ) : (
               <Button
                 variant="primary"
                 className="w-full justify-center"
                 disabled={!videoFile}
-                icon={<Play size={15} />}
+                icon={<Play size={14} />}
                 onClick={runDetection}
               >
                 Run YOLO Detection
@@ -385,7 +382,14 @@ export default function InventoryMonitoring() {
           <p className="text-[13px] mb-4" style={{ color: '#475569' }}>
             Products with detected counts below this threshold will be flagged for bulk restocking and competitor analysis.
           </p>
-          <div className="flex items-center gap-3">
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">
+                Low-Stock Threshold
+              </label>
+              <span className="font-mono-custom text-[12px] font-bold text-indigo-600">{threshold} units</span>
+            </div>
             <input
               type="range" min={10} max={150} step={5} value={threshold}
               onChange={e => setThreshold(+e.target.value)}
@@ -415,7 +419,7 @@ export default function InventoryMonitoring() {
         </Card>
       </div>
 
-      {/* ── SHELF GRID ── */}
+      {/* Shelf grid */}
       <Card>
         <CardTitle icon={<span>🗂️</span>}>Shelf Overview</CardTitle>
 
@@ -427,11 +431,11 @@ export default function InventoryMonitoring() {
           />
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
-              <StatCard icon={<span>📦</span>} label="Total Units" value={fmt(grandTotal)} color="green" />
-              <StatCard icon={<span>🏷️</span>} label="SKUs Tracked" value={items.length} color="violet" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+              <StatCard icon={<Package size={16} />} label="Total Units" value={fmt(grandTotal)} color="green" />
+              <StatCard icon={<CheckCircle2 size={16} />} label="SKUs Tracked" value={items.length} color="violet" />
               <StatCard
-                icon={<span>⚠️</span>}
+                icon={<AlertCircle size={16} />}
                 label="Low-Stock SKUs"
                 value={lowCount}
                 color={lowCount > 0 ? 'orange' : 'cyan'}

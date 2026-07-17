@@ -3,7 +3,11 @@ import type { ReactNode } from 'react'
 
 // ── SPINNER ──────────────────────────────────────────────────────────────────
 export function Spinner({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
-  const s = { sm: 'w-4 h-4 border-2', md: 'w-6 h-6 border-2', lg: 'w-10 h-10 border-[3px]' }[size]
+  const s = {
+    sm: 'w-3.5 h-3.5 border-[1.5px]',
+    md: 'w-5 h-5 border-2',
+    lg: 'w-8 h-8 border-[2.5px]'
+  }[size]
   return (
     <div
       className={cn('rounded-full spinner', s, className)}
@@ -29,7 +33,11 @@ export function LoadingState({ message = 'Loading...' }: { message?: string }) {
 }
 
 // ── EMPTY STATE ───────────────────────────────────────────────────────────────
-export function EmptyState({ icon, title, sub, children }: { icon: string; title: string; sub?: string; children?: ReactNode }) {
+export function EmptyState({
+  icon, title, sub, children
+}: {
+  icon: string; title: string; sub?: string; children?: ReactNode
+}) {
   return (
     <div
       className="text-center py-14 px-6 rounded-2xl"
@@ -123,8 +131,12 @@ const statAccent: Record<StatColor, { bar: string; glow: string; icon: string; i
 export function StatCard({
   icon, label, value, color, badge, badgeColor
 }: {
-  icon: ReactNode; label: string; value: string | number
-  color: StatColor; badge?: string; badgeColor?: 'up' | 'down' | 'neutral'
+  icon: ReactNode
+  label: string
+  value: string | number
+  color: StatColor
+  badge?: string
+  badgeColor?: 'up' | 'down' | 'neutral'
 }) {
   const acc = statAccent[color]
 

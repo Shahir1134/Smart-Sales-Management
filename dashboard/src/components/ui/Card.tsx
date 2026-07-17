@@ -29,7 +29,14 @@ export function Card({ children, className, hover = false, noPad = false }: Card
   )
 }
 
-export function CardTitle({ children, icon, className }: { children: ReactNode; icon?: ReactNode; className?: string }) {
+export function CardTitle({
+  children, icon, className, subtitle
+}: {
+  children: ReactNode
+  icon?: ReactNode
+  className?: string
+  subtitle?: string
+}) {
   return (
     <div className={cn('flex items-center gap-2.5 mb-4 font-heading font-bold text-[13px] tracking-wide', className)}
       style={{ color: '#E2E8F0' }}

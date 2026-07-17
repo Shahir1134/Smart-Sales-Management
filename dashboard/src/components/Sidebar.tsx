@@ -12,9 +12,9 @@ const NAV = [
   { label: 'Store',                to: '/store',       icon: ShoppingBag,     section: 'main' },
   { label: 'Sales Prediction',     to: '/sales',       icon: TrendingUp,      section: 'main' },
   { label: 'Competitor Analysis',  to: '/competitor',  icon: Globe,           section: 'main' },
-  { label: 'AI Sales Assistant',   to: '/assistant',   icon: Bot,             section: 'analytics', dot: true },
-  { label: 'Reports',              to: '/reports',     icon: FileText,        section: 'analytics' },
-  { label: 'Settings',             to: '/settings',    icon: Settings,        section: 'analytics' },
+  { label: 'AI Sales Assistant',   to: '/assistant',   icon: Bot,             section: 'tools', dot: true },
+  { label: 'Reports',              to: '/reports',     icon: FileText,        section: 'tools' },
+  { label: 'Settings',             to: '/settings',    icon: Settings,        section: 'tools' },
 ]
 
 interface SidebarProps {
@@ -25,7 +25,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
   const { data: health } = useHealth()
 
   const mainNav = NAV.filter(n => n.section === 'main')
-  const analyticsNav = NAV.filter(n => n.section === 'analytics')
+  const toolsNav = NAV.filter(n => n.section === 'tools')
 
   function NavItem({ item }: { item: typeof NAV[0] }) {
     return (
@@ -97,7 +97,9 @@ export function Sidebar({ collapsed }: SidebarProps) {
             Main
           </div>
         )}
-        {mainNav.map(item => <NavItem key={item.to} item={item} />)}
+        <div className="flex flex-col gap-0.5">
+          {mainNav.map(item => <NavItem key={item.to} item={item} />)}
+        </div>
 
         {!collapsed && (
           <div className="text-[9px] font-bold px-2 pb-2 pt-4 uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Play } from 'lucide-react'
+import { Play, Search, Globe, Cpu, CheckCircle, Clock, ChevronRight } from 'lucide-react'
 import { api, type PipelineEvent, type RestockRow } from '../lib/api'
 import { useInventoryStore } from '../hooks/useInventoryStore'
 import { Card, CardTitle } from '../components/ui/Card'
@@ -8,7 +8,23 @@ import { Badge } from '../components/ui/Badge'
 import { Alert } from '../components/ui/Badge'
 import { cn, parsePriceValue } from '../lib/utils'
 
-const STAGE_LABELS = ['Search', 'Verify', 'Decide']
+const STAGES = [
+  {
+    label: 'Search',
+    description: 'Tavily AI searches across Amazon, Flipkart, Snapdeal',
+    icon: Search,
+  },
+  {
+    label: 'Scrape & Verify',
+    description: 'Playwright scrapes live product listings',
+    icon: Globe,
+  },
+  {
+    label: 'AI Analysis',
+    description: 'Groq LLM compares prices and recommends best deals',
+    icon: Cpu,
+  },
+]
 
 interface LogLine { time: string; stage: string; status: string; msg: string }
 
@@ -35,9 +51,9 @@ export default function CompetitorAnalysis() {
     ? Object.entries(inventory).filter(([k, v]) => k !== 'grand_total' && v < threshold).map(([k]) => k)
     : []
 
-  function addLog(stage: string, status: string, msg: string) {
+  function addLog(stageLabel: string, status: string, msg: string) {
     const time = new Date().toLocaleTimeString('en-IN', { hour12: false })
-    setLogs(prev => [...prev, { time, stage, status, msg }])
+    setLogs(prev => [...prev, { time, stage: stageLabel, status, msg }])
   }
 
   async function runPipeline() {
@@ -82,7 +98,6 @@ export default function CompetitorAnalysis() {
     }
   }
 
-  // Best deal per product
   const bestPerProduct: Record<string, number> = {}
   results?.forEach(r => {
     const v = parsePriceValue(r['Price'] ?? '')
@@ -90,6 +105,8 @@ export default function CompetitorAnalysis() {
       bestPerProduct[r['Product Name']] = v
     }
   })
+
+  const isComplete = !running && results !== null
 
   return (
     <div className="space-y-6">
@@ -105,12 +122,12 @@ export default function CompetitorAnalysis() {
       </div>
 
       {!inventory && (
-        <Alert variant="warning" icon="⚠️">
+        <Alert variant="warning">
           No inventory loaded. Go to <strong>Inventory Monitoring</strong> and analyze a shelf video first.
         </Alert>
       )}
 
-      {/* Pipeline Stepper */}
+      {/* Pipeline visualization */}
       <Card>
         <div className="flex items-center gap-2 px-2">
           {STAGE_LABELS.map((label, i) => (
@@ -172,19 +189,23 @@ export default function CompetitorAnalysis() {
             <p className="text-[12px] mt-1.5 capitalize" style={{ color: '#475569' }}>{lowStockProducts.join(', ')}</p>
           </div>
         )}
+
         {inventory && lowStockProducts.length === 0 && (
           <p className="text-[13px] mb-4" style={{ color: '#475569' }}>All products are well stocked (above {threshold} units).</p>
         )}
+
         <Button
-          variant="primary" icon={<Play size={15}/>}
-          disabled={!inventory} loading={running}
+          variant="primary"
+          icon={<Play size={14} />}
+          disabled={!inventory}
+          loading={running}
           onClick={runPipeline}
         >
-          {running ? 'Pipeline Running...' : '▶ Run Restock Pipeline'}
+          {running ? 'Pipeline Running…' : 'Run Restock Pipeline'}
         </Button>
       </Card>
 
-      {/* Log */}
+      {/* Pipeline terminal log */}
       {logs.length > 0 && (
         <Card>
           <CardTitle icon={<span>🖥️</span>}>Pipeline Log</CardTitle>
@@ -220,6 +241,7 @@ export default function CompetitorAnalysis() {
           <CardTitle icon={<span>🏆</span>}>
             Restock Recommendations — Best Deals Found
           </CardTitle>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {results.map((r, i) => {
               const priceVal = parsePriceValue(r['Price'] ?? '')
@@ -259,6 +281,7 @@ export default function CompetitorAnalysis() {
                       ))}
                     </div>
                   </div>
+
                   {r['Product URL'] && (
                     <a
                       href={r['Product URL']} target="_blank" rel="noopener noreferrer"
@@ -268,7 +291,7 @@ export default function CompetitorAnalysis() {
                         color: '#fff',
                       }}
                     >
-                      View listing →
+                      View listing <ChevronRight size={12} />
                     </a>
                   )}
                 </div>
@@ -300,7 +323,11 @@ export default function CompetitorAnalysis() {
       )}
 
       {results && results.length === 0 && (
-        <EmptyState icon="🤔" title="No results" sub="The AI agent returned no comparison data. Try again or check your API keys." />
+        <EmptyState
+          icon="🔍"
+          title="No results found"
+          sub="The AI agent returned no comparison data. Try again or check your API keys."
+        />
       )}
     </div>
   )

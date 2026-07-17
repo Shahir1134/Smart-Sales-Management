@@ -5,6 +5,7 @@ import { Card, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui'
 import { Badge } from '../components/ui/Badge'
 import { Alert } from '../components/ui/Badge'
+import { Settings2, Key, Info } from 'lucide-react'
 
 export default function Settings() {
   const { data: health } = useHealth()
@@ -16,22 +17,22 @@ export default function Settings() {
     setSaving(true)
     try {
       await api.updateThresholds(thresholds)
-      setMsg({ type: 'success', text: '✅ Thresholds saved successfully!' })
-    } catch { setMsg({ type: 'error', text: '❌ Failed to save thresholds.' }) }
+      setMsg({ type: 'success', text: 'Thresholds saved successfully.' })
+    } catch { setMsg({ type: 'error', text: 'Failed to save thresholds.' }) }
     finally { setSaving(false); setTimeout(() => setMsg(null), 3000) }
   }
 
   const sliders = [
-    { key: 'near_expiry_days', label: 'Near Expiry Window (days)', hint: 'Products expiring within this window get flagged for discount.', min: 3, max: 30, suffix: 'd' },
-    { key: 'low_stock_days', label: 'Low Stock Threshold (days of stock left)', hint: 'Products with fewer days of stock get flagged for restock.', min: 1, max: 14, suffix: 'd' },
-    { key: 'trend_up_pct', label: 'Trending Up Threshold (%)', hint: 'Sales must have grown by this % week-over-week to be "trending up".', min: 5, max: 100, suffix: '%' },
+    { key: 'near_expiry_days', label: 'Near Expiry Window', hint: 'Products expiring within this window get flagged for discount.', min: 3, max: 30, suffix: 'd' },
+    { key: 'low_stock_days',   label: 'Low Stock Threshold', hint: 'Products with fewer days of stock get flagged for restock.', min: 1, max: 14, suffix: 'd' },
+    { key: 'trend_up_pct',     label: 'Trending Up Threshold', hint: 'Sales must have grown by this % week-over-week to be "trending up".', min: 5, max: 100, suffix: '%' },
   ]
 
   const sysInfo = [
-    { label: 'YOLO MODEL', value: 'YOLOv8 + ByteTrack', sub: 'final_best.pt' },
-    { label: 'LLM',        value: 'Groq OpenAI OSS 120B', sub: 'openai/gpt-oss-120b' },
-    { label: 'SCRAPER',    value: 'Playwright + BS4', sub: 'Headless Chromium + JSON-LD' },
-    { label: 'BACKEND',    value: 'FastAPI + Uvicorn', sub: 'localhost:8000' },
+    { label: 'YOLO Model',  value: 'YOLOv8 + ByteTrack', sub: 'final_best.pt' },
+    { label: 'LLM',         value: 'Groq OSS 120B',       sub: 'openai/gpt-oss-120b' },
+    { label: 'Scraper',     value: 'Playwright + BS4',     sub: 'Headless Chromium + JSON-LD' },
+    { label: 'Backend',     value: 'FastAPI + Uvicorn',    sub: 'localhost:8000' },
   ]
 
   return (
@@ -160,9 +161,11 @@ export default function Settings() {
               </div>
             ))}
           </div>
-          <Button variant="primary" className="mt-5" loading={saving} onClick={save}>
-            💾 Save Thresholds
-          </Button>
+          <div className="mt-5 pt-5 border-t border-gray-100">
+            <Button variant="primary" size="sm" loading={saving} onClick={save}>
+              Save Thresholds
+            </Button>
+          </div>
         </Card>
       </div>
 
@@ -186,6 +189,21 @@ export default function Settings() {
           ))}
         </div>
       </Card>
+
+      {/* Stack badges */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {[
+          { label: 'React 18', color: 'cyan' as const },
+          { label: 'TypeScript', color: 'indigo' as const },
+          { label: 'FastAPI', color: 'green' as const },
+          { label: 'YOLOv8', color: 'orange' as const },
+          { label: 'Groq LLM', color: 'violet' as const },
+          { label: 'Tavily', color: 'gray' as const },
+          { label: 'Playwright', color: 'gray' as const },
+        ].map(b => (
+          <Badge key={b.label} variant={b.color}>{b.label}</Badge>
+        ))}
+      </div>
     </div>
   )
 }

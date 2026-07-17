@@ -1,7 +1,7 @@
 import { cn } from '../../lib/utils'
 import type { ReactNode } from 'react'
 
-type Variant = 'green' | 'red' | 'orange' | 'violet' | 'cyan' | 'gray' | 'pink'
+type Variant = 'green' | 'red' | 'orange' | 'violet' | 'cyan' | 'gray' | 'pink' | 'indigo'
 
 const variantStyles: Record<Variant, { bg: string; color: string; border: string }> = {
   green:  { bg: 'rgba(16,185,129,0.12)',  color: '#34D399', border: 'rgba(16,185,129,0.25)' },

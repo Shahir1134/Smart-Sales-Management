@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, TrendingUp, TrendingDown } from 'lucide-react'
 import { api, type SalesMetricsResponse, type ThresholdUpdate } from '../lib/api'
 import { Card, CardTitle } from '../components/ui/Card'
 import { StatCard, LoadingState, Button } from '../components/ui'
@@ -8,7 +8,7 @@ import { Alert } from '../components/ui/Badge'
 import { fmtPct } from '../lib/utils'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, Legend, BarChart, Bar
+  CartesianGrid, Legend, BarChart, Bar, Cell
 } from 'recharts'
 
 const COLORS = ['#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#EC4899']
@@ -34,9 +34,9 @@ export default function SalesPrediction() {
     setSaving(true)
     try {
       await api.updateThresholds(thresholds)
-      setMsg('✅ Thresholds saved!')
+      setMsg('Thresholds saved successfully.')
       load()
-    } catch { setMsg('❌ Save failed') }
+    } catch { setMsg('Save failed. Please try again.') }
     finally { setSaving(false); setTimeout(() => setMsg(null), 3000) }
   }
 
@@ -49,7 +49,6 @@ export default function SalesPrediction() {
     return pt
   }) : []
 
-  // Bar chart: trend %
   const trendData = data ? Object.entries(data.metrics)
     .map(([name, m]) => ({ name, trend: m.trend_pct, avg: m.avg_daily_sales_7d }))
     .sort((a, b) => Math.abs(b.trend) - Math.abs(a.trend))
@@ -75,10 +74,16 @@ export default function SalesPrediction() {
             30-day simulated sales velocity, trend analysis, and days-of-stock-left forecasting.
           </p>
         </div>
-        <Button variant="secondary" size="sm" icon={<RefreshCw size={14}/>} onClick={load}>Refresh</Button>
+        <Button variant="secondary" size="sm" icon={<RefreshCw size={13} />} onClick={load}>
+          Refresh
+        </Button>
       </div>
 
-      {msg && <Alert variant={msg.startsWith('✅') ? 'success' : 'error'}>{msg}</Alert>}
+      {msg && (
+        <Alert variant={msg.includes('failed') ? 'error' : 'success'}>
+          {msg}
+        </Alert>
+      )}
 
       {/* Threshold controls */}
       <Card hover>
@@ -112,11 +117,11 @@ export default function SalesPrediction() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={<span>📦</span>} label="Products Tracked" value={data ? Object.keys(data.metrics).length : '—'} color="green" />
-        <StatCard icon={<span>🏷️</span>} label="Discount Candidates" value={data?.discount_triggers.length ?? '—'} color="orange" />
-        <StatCard icon={<span>📥</span>} label="Restock Candidates" value={data?.restock_triggers.length ?? '—'} color="red" />
+        <StatCard icon={<TrendingUp size={16} />} label="Products Tracked" value={data ? Object.keys(data.metrics).length : '—'} color="green" />
+        <StatCard icon={<TrendingDown size={16} />} label="Discount Candidates" value={data?.discount_triggers.length ?? '—'} color="orange" />
+        <StatCard icon={<RefreshCw size={16} />} label="Restock Candidates" value={data?.restock_triggers.length ?? '—'} color="red" />
         <StatCard
-          icon={<span>📅</span>}
+          icon={<TrendingUp size={16} />}
           label="Avg Days of Stock"
           value={data ? (Object.values(data.metrics).reduce((s, m) => s + (m.days_of_stock_left === 999 ? 30 : m.days_of_stock_left), 0) / Object.keys(data.metrics).length).toFixed(1) : '—'}
           color="cyan"
@@ -135,7 +140,11 @@ export default function SalesPrediction() {
               <Tooltip contentStyle={chartTooltipStyle} />
               <Legend wrapperStyle={{ fontSize: 11, color: '#64748B' }} />
               {products.slice(0, 6).map((p, i) => (
-                <Line key={p} type="monotone" dataKey={p} stroke={COLORS[i]} strokeWidth={2} dot={false} name={p} />
+                <Line
+                  key={p} type="monotone" dataKey={p}
+                  stroke={CHART_COLORS[i]} strokeWidth={1.5} dot={false} name={p}
+                  activeDot={{ r: 4, strokeWidth: 0 }}
+                />
               ))}
             </LineChart>
           </ResponsiveContainer>
@@ -153,10 +162,58 @@ export default function SalesPrediction() {
                 fill="#8B5CF6" radius={[0, 4, 4, 0]}
                 label={{ position: 'right', fontSize: 10, fill: '#475569', formatter: (v: unknown) => fmtPct(v as number) }}
               />
+              <Bar dataKey="trend" name="Trend %" radius={[0, 4, 4, 0]}>
+                {trendData.map((entry, i) => (
+                  <Cell
+                    key={`cell-${i}`}
+                    fill={entry.trend >= 0 ? '#6366F1' : '#EF4444'}
+                    opacity={0.85}
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Card>
       </div>
+
+      {/* Threshold controls */}
+      <Card>
+        <CardTitle icon={<RefreshCw size={14} />} subtitle="Adjust the rules engine thresholds that trigger discount and restock recommendations.">
+          Rule Engine Thresholds
+        </CardTitle>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {thresholdFields.map(f => (
+            <div key={f.key}>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">
+                  {f.label}
+                </label>
+                <span className="font-mono-custom text-[12px] font-bold text-indigo-600">
+                  {thresholds[f.key as keyof ThresholdUpdate]}{f.suffix}
+                </span>
+              </div>
+              <input
+                type="range" min={f.min} max={f.max}
+                value={thresholds[f.key as keyof ThresholdUpdate] ?? f.min}
+                onChange={e => setThresholds(t => ({ ...t, [f.key]: +e.target.value }))}
+                className="w-full"
+              />
+              <div className="flex items-center justify-between mt-1.5 text-[10px] text-gray-400">
+                <span>{f.min}{f.suffix}</span>
+                <span>{f.max}{f.suffix}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3 mt-5 pt-5 border-t border-gray-100">
+          <Button variant="primary" size="sm" loading={saving} onClick={saveThresholds}>
+            Apply Thresholds
+          </Button>
+          <span className="text-[12px] text-gray-400">Changes will recalculate triggers on all products</span>
+        </div>
+      </Card>
 
       {/* Full metrics table */}
       <Card noPad>
@@ -164,7 +221,7 @@ export default function SalesPrediction() {
           <CardTitle icon={<span>📋</span>}>Product Metrics Table</CardTitle>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-[12px]">
+          <table className="w-full">
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
                 {['Product','Stock','7-Day Avg','Trend','Days Left','Expiry','Status'].map(h => (
@@ -192,9 +249,9 @@ export default function SalesPrediction() {
                     <td className="px-4 py-3 font-mono-custom text-[11px]" style={{ color: m.days_until_expiry < 14 ? '#F87171' : '#475569' }}>
                       {m.expiry_date}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-3">
                       {trigger
-                        ? <Badge variant={trigger.action === 'discount' ? 'orange' : 'violet'}>{trigger.action.toUpperCase()}</Badge>
+                        ? <Badge variant={trigger.action === 'discount' ? 'orange' : 'violet'}>{trigger.action}</Badge>
                         : <Badge variant="green">OK</Badge>
                       }
                     </td>
