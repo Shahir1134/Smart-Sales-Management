@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useHealth } from '../hooks/useHealth'
 import { Card, CardTitle } from '../components/ui/Card'
@@ -8,17 +8,44 @@ import { Alert } from '../components/ui/Badge'
 
 export default function Settings() {
   const { data: health } = useHealth()
-  const [thresholds, setThresholds] = useState({ near_expiry_days: 14, low_stock_days: 5, trend_up_pct: 25 })
+  
+  const getInitialThresholds = () => {
+    const saved = localStorage.getItem('shelfsense_thresholds')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch {}
+    }
+    return { near_expiry_days: 14, low_stock_days: 5, trend_up_pct: 25 }
+  }
+
+  const [thresholds, setThresholds] = useState(getInitialThresholds)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success'|'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    api.getSalesMetrics().then(d => {
+      if (d && d.thresholds) {
+        setThresholds(d.thresholds)
+        localStorage.setItem('shelfsense_thresholds', JSON.stringify(d.thresholds))
+      }
+    }).catch(err => {
+      console.error('Error fetching settings thresholds on mount:', err)
+    })
+  }, [])
 
   async function save() {
     setSaving(true)
     try {
       await api.updateThresholds(thresholds)
+      localStorage.setItem('shelfsense_thresholds', JSON.stringify(thresholds))
       setMsg({ type: 'success', text: '✅ Thresholds saved successfully!' })
-    } catch { setMsg({ type: 'error', text: '❌ Failed to save thresholds.' }) }
-    finally { setSaving(false); setTimeout(() => setMsg(null), 3000) }
+    } catch { 
+      setMsg({ type: 'error', text: '❌ Failed to save thresholds.' }) 
+    } finally { 
+      setSaving(false)
+      setTimeout(() => setMsg(null), 3000) 
+    }
   }
 
   const sliders = [
@@ -153,7 +180,7 @@ export default function Settings() {
                 <input
                   type="range" min={s.min} max={s.max}
                   value={thresholds[s.key as keyof typeof thresholds]}
-                  onChange={e => setThresholds(t => ({ ...t, [s.key]: +e.target.value }))}
+                  onChange={e => setThresholds((t: any) => ({ ...t, [s.key]: +e.target.value }))}
                   className="w-full"
                 />
                 <p className="text-[11px] mt-1.5" style={{ color: '#374151' }}>{s.hint}</p>

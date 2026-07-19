@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useNotificationStore } from '../hooks/useNotificationStore'
 
 const http = axios.create({ baseURL: '/api' })
 
@@ -187,8 +188,55 @@ export const api = {
   getInventoryMaster: (): Promise<{ master: Record<string, ProductMaster> }> =>
     http.get('/inventory/master').then(r => r.data),
 
-  getSalesMetrics: (): Promise<SalesMetricsResponse> =>
-    http.get('/sales/metrics').then(r => r.data),
+  getSalesMetrics: async (): Promise<SalesMetricsResponse> => {
+    let data = await http.get('/sales/metrics').then(r => r.data)
+    const local = localStorage.getItem('shelfsense_thresholds')
+    if (local) {
+      try {
+        const parsed = JSON.parse(local)
+        const needsSync = data.thresholds.near_expiry_days !== parsed.near_expiry_days ||
+                          data.thresholds.low_stock_days !== parsed.low_stock_days ||
+                          data.thresholds.trend_up_pct !== parsed.trend_up_pct
+        if (needsSync) {
+          await http.patch('/sales/thresholds', parsed)
+          data = await http.get('/sales/metrics').then(r => r.data)
+        }
+      } catch (e) {
+        console.error('Error syncing thresholds:', e)
+      }
+    }
+
+    // Process alerts to feed the notification center dynamically
+    try {
+      const { addNotification } = useNotificationStore.getState()
+      
+      if (data.discount_triggers) {
+        data.discount_triggers.forEach((t: any) => {
+          const name = t.product.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+          addNotification(
+            'Expiry Warning',
+            `${name} expires in ${t.expiry_days} days.`,
+            'warning'
+          )
+        })
+      }
+
+      if (data.restock_triggers) {
+        data.restock_triggers.forEach((t: any) => {
+          const name = t.product.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+          addNotification(
+            'Low Stock Alert',
+            `${name} is running low. Current Stock: ${t.current_stock} units. Restock immediately.`,
+            'critical'
+          )
+        })
+      }
+    } catch (err) {
+      console.error('Error generating notification alerts from metrics:', err)
+    }
+
+    return data
+  },
 
   updateThresholds: (body: ThresholdUpdate): Promise<ThresholdUpdate> =>
     http.patch('/sales/thresholds', body).then(r => r.data),
