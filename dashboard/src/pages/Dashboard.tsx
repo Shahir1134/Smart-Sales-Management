@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Package, TrendingUp, AlertTriangle, CheckCircle, ShoppingCart } from 'lucide-react'
+import { Package, TrendingUp, AlertTriangle, CheckCircle, ShoppingCart, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { api, type SalesMetricsResponse, type ProductMaster } from '../lib/api'
 import { Card, CardTitle } from '../components/ui/Card'
@@ -53,7 +53,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stat Cards */}
+      {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         <StatCard icon={<Package size={18}/>} label="Total SKUs" value={inventory.length} color="green" />
         <StatCard icon={<ShoppingCart size={18}/>} label="Total Stock" value={fmt(totalStock)} color="violet" />
@@ -62,7 +62,7 @@ export default function Dashboard() {
           label="Discount Needed"
           value={metrics?.discount_triggers.length ?? 0}
           color="orange"
-          badge={metrics && metrics.discount_triggers.length > 0 ? 'Attention' : undefined}
+          badge={metrics && metrics.discount_triggers.length > 0 ? 'Action' : undefined}
           badgeColor="down"
         />
         <StatCard
@@ -82,7 +82,7 @@ export default function Dashboard() {
         <Card className="xl:col-span-2" hover>
           <CardTitle icon={<span>📈</span>}>30-Day Sales Trend (Top SKUs)</CardTitle>
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={240}>
+            <ResponsiveContainer width="100%" height={220}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                 <XAxis
@@ -109,10 +109,14 @@ export default function Dashboard() {
                 <Legend wrapperStyle={{ fontSize: 11, color: '#64748B' }} />
                 {prods.map((p, i) => (
                   <Line
-                    key={p} type="monotone" dataKey={p}
-                    stroke={COLORS[i % COLORS.length]}
-                    strokeWidth={2} dot={false}
+                    key={p}
+                    type="monotone"
+                    dataKey={p}
+                    stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                    strokeWidth={1.5}
+                    dot={false}
                     name={p}
+                    activeDot={{ r: 4, strokeWidth: 0 }}
                   />
                 ))}
               </LineChart>
@@ -138,17 +142,23 @@ export default function Dashboard() {
                     <div className="font-semibold text-[13px] capitalize truncate" style={{ color: '#E2E8F0' }}>{t.product}</div>
                     <div className="text-[11px] mt-0.5" style={{ color: '#475569' }}>{t.suggested_value}</div>
                   </div>
-                  <Badge variant={t.urgency === 'urgent' ? 'red' : t.urgency === 'high' ? 'orange' : 'violet'}>
+                  <Badge variant={t.urgency === 'urgent' ? 'red' : t.urgency === 'high' ? 'orange' : 'gray'}>
                     {t.urgency}
                   </Badge>
                 </div>
               ))}
-              <Button variant="secondary" size="sm" className="w-full mt-2 justify-center" onClick={() => navigate('/assistant')}>
-                View All Recommendations →
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full justify-center mt-3"
+                icon={<ArrowRight size={12} />}
+                onClick={() => navigate('/assistant')}
+              >
+                View All Recommendations
               </Button>
             </div>
           ) : (
-            <EmptyState icon="✅" title="All Clear" sub="No immediate actions needed." />
+            <EmptyState icon="✓" title="All Clear" sub="No immediate actions needed." />
           )}
         </Card>
       </div>
@@ -188,13 +198,13 @@ export default function Dashboard() {
           )}
         </Card>
 
-        {/* Product master table */}
+        {/* Product catalog table */}
         <Card noPad>
           <div className="px-5 pt-5 pb-3">
             <CardTitle icon={<span>🏪</span>}>Product Catalog (inventory.csv)</CardTitle>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-[12px]">
+            <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
                   {['Product','Category','Stock','MRP','Expiry'].map(h => (

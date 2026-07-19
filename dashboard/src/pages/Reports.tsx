@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Download } from 'lucide-react'
+import { Download, FileText, TrendingUp, TrendingDown, Package, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react'
 import { api, type SalesMetricsResponse, type ProductMaster } from '../lib/api'
 import { Card, CardTitle } from '../components/ui/Card'
 import { StatCard, LoadingState, Button } from '../components/ui'
@@ -43,6 +43,12 @@ export default function Reports() {
 
   if (loading) return <LoadingState message="Building report..." />
 
+  const healthyCount = data?.baseline_products.length ?? 0
+  const discountCount = data?.discount_triggers.length ?? 0
+  const restockCount = data?.restock_triggers.length ?? 0
+  const totalProducts = data ? Object.keys(data.metrics).length : 0
+  const healthScore = totalProducts > 0 ? Math.round((healthyCount / totalProducts) * 100) : 0
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -53,17 +59,17 @@ export default function Reports() {
           </h1>
           <p className="text-[13px] mt-1" style={{ color: '#475569' }}>Full product inventory, sales metrics, and action summary.</p>
         </div>
-        <Button variant="secondary" size="sm" icon={<Download size={14}/>} onClick={exportCSV}>
+        <Button variant="secondary" size="sm" icon={<Download size={13} />} onClick={exportCSV}>
           Export CSV
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={<span>📦</span>} label="Total Products" value={data ? Object.keys(data.metrics).length : '—'} color="green" />
-        <StatCard icon={<span>🏷️</span>} label="Discount Needed" value={data?.discount_triggers.length ?? '—'} color="orange" />
-        <StatCard icon={<span>📥</span>} label="Restock Needed" value={data?.restock_triggers.length ?? '—'} color="violet" />
-        <StatCard icon={<span>✅</span>} label="Healthy" value={data?.baseline_products.length ?? '—'} color="cyan" />
+        <StatCard icon={<Package size={16} />} label="Total Products" value={totalProducts} color="green" />
+        <StatCard icon={<AlertTriangle size={16} />} label="Discount Needed" value={discountCount} color="orange" />
+        <StatCard icon={<RefreshCw size={16} />} label="Restock Needed" value={restockCount} color="violet" />
+        <StatCard icon={<CheckCircle2 size={16} />} label="Healthy" value={healthyCount} color="cyan" />
       </div>
 
       {/* Candidates */}
@@ -74,7 +80,7 @@ export default function Reports() {
           {data?.discount_triggers.length === 0 ? (
             <div className="text-center py-8 text-[13px]" style={{ color: '#475569' }}>✅ None — no products near expiry</div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {data?.discount_triggers.map((t, i) => (
                 <div
                   key={i}
@@ -99,7 +105,7 @@ export default function Reports() {
           {data?.restock_triggers.length === 0 ? (
             <div className="text-center py-8 text-[13px]" style={{ color: '#475569' }}>✅ None — all products well stocked</div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {data?.restock_triggers.map((t, i) => (
                 <div
                   key={i}
@@ -119,13 +125,13 @@ export default function Reports() {
         </Card>
       </div>
 
-      {/* Full table */}
+      {/* Full report table */}
       <Card noPad>
         <div className="px-5 pt-5 pb-3">
           <CardTitle icon={<span>📋</span>}>Full Inventory Report</CardTitle>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-[12px]">
+          <table className="w-full">
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
                 {['Product','Category','Supplier','Cost','MRP','Stock','7d Avg','Trend','Days Left','Expiry','Action'].map(h => (
@@ -161,9 +167,9 @@ export default function Reports() {
                     >
                       {m.expiry_date}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-3">
                       {trigger
-                        ? <Badge variant={trigger.action === 'discount' ? 'orange' : 'violet'}>{trigger.action.toUpperCase()}</Badge>
+                        ? <Badge variant={trigger.action === 'discount' ? 'orange' : 'violet'}>{trigger.action}</Badge>
                         : <Badge variant="green">OK</Badge>
                       }
                     </td>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Bot, TrendingUp, TrendingDown, CheckCircle2, Package } from 'lucide-react'
 import { api, type SalesMetricsResponse, type Recommendation } from '../lib/api'
 import { Card, CardTitle } from '../components/ui/Card'
 import { StatCard, LoadingState, Button, EmptyState } from '../components/ui'
@@ -27,7 +27,7 @@ export default function AISalesAssistant() {
       const res = await api.generateRecommendations(triggers)
       setRecommendations(res.recommendations)
       if (res.warning) setMsg({ type: 'info', text: res.warning })
-      else setMsg({ type: 'success', text: '✅ AI recommendations generated!' })
+      else setMsg({ type: 'success', text: 'AI recommendations generated successfully.' })
     } catch(e: unknown) {
       setMsg({ type: 'error', text: 'Error: ' + (e instanceof Error ? e.message : 'Unknown') })
     } finally {
@@ -40,7 +40,9 @@ export default function AISalesAssistant() {
   const triggers = data ? [...data.discount_triggers, ...data.restock_triggers] : []
   const displayed = recommendations ?? triggers.map(t => ({
     ...t,
-    headline: t.action === 'discount' ? `Discount ${t.product.replace(/_/g,' ')}` : `Restock ${t.product.replace(/_/g,' ')}`,
+    headline: t.action === 'discount'
+      ? `Discount ${t.product.replace(/_/g,' ')}`
+      : `Restock ${t.product.replace(/_/g,' ')}`,
     detail: t.action === 'discount'
       ? `Expires in ${t.expiry_days}d, selling ~${t.avg_daily_sales_7d}/day. ${t.suggested_value}`
       : `Only ${t.days_of_stock_left}d of stock left at ~${t.avg_daily_sales_7d}/day (${fmtPct(t.trend_pct)} vs last week). ${t.suggested_value}`
@@ -58,35 +60,36 @@ export default function AISalesAssistant() {
         </p>
       </div>
 
-      {/* Stats */}
+      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={<span>📊</span>} label="Products Tracked" value={data ? Object.keys(data.metrics).length : '—'} color="green" />
-        <StatCard icon={<span>🏷️</span>} label="Discount Actions" value={data?.discount_triggers.length ?? '—'} color="orange" />
-        <StatCard icon={<span>📥</span>} label="Restock Actions" value={data?.restock_triggers.length ?? '—'} color="violet" />
-        <StatCard icon={<span>✅</span>} label="Healthy Products" value={data?.baseline_products.length ?? '—'} color="cyan" />
+        <StatCard icon={<Package size={16} />} label="Products Tracked" value={data ? Object.keys(data.metrics).length : '—'} color="green" />
+        <StatCard icon={<TrendingDown size={16} />} label="Discount Actions" value={data?.discount_triggers.length ?? '—'} color="orange" />
+        <StatCard icon={<TrendingUp size={16} />} label="Restock Actions" value={data?.restock_triggers.length ?? '—'} color="violet" />
+        <StatCard icon={<CheckCircle2 size={16} />} label="Healthy Products" value={data?.baseline_products.length ?? '—'} color="cyan" />
       </div>
 
       {msg && <Alert variant={msg.type}>{msg.text}</Alert>}
 
-      {/* Recommendation panel */}
+      {/* Recommendations */}
       <Card>
         <div className="flex items-center justify-between mb-4">
           <CardTitle icon={<span>✨</span>} className="mb-0">
             {recommendations ? 'AI-Generated' : 'Rule-Based'} Recommendations
           </CardTitle>
-          <Button variant="primary" size="sm" loading={genLoading} icon={<Sparkles size={14}/>} onClick={generate}>
-            ✨ Generate AI Copy
-          </Button>
         </div>
 
         {!recommendations && (
-          <Alert variant="info" icon="💡">
-            Showing rule-based summaries — click "Generate AI Copy" for Groq-powered recommendations.
+          <Alert variant="info">
+            Showing rule-based summaries. Click "Generate AI Copy" above for Groq-powered recommendations.
           </Alert>
         )}
 
         {displayed.length === 0 ? (
-          <EmptyState icon="✅" title="All Clear" sub="No actions needed. Every product is well stocked and not near expiry." />
+          <EmptyState
+            icon="✓"
+            title="All Clear"
+            sub="No actions needed. Every product is well stocked and not near expiry."
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
             {displayed.map((item, i) => {
@@ -180,4 +183,8 @@ export default function AISalesAssistant() {
       )}
     </div>
   )
+}
+
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ')
 }
