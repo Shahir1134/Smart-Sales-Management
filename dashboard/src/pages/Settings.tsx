@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { useHealth } from '../hooks/useHealth'
 import { Card, CardTitle } from '../components/ui/Card'
@@ -9,30 +9,57 @@ import { Settings2, Key, Info } from 'lucide-react'
 
 export default function Settings() {
   const { data: health } = useHealth()
-  const [thresholds, setThresholds] = useState({ near_expiry_days: 14, low_stock_days: 5, trend_up_pct: 25 })
+
+  const getInitialThresholds = () => {
+    const saved = localStorage.getItem('shelfsense_thresholds')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch { }
+    }
+    return { near_expiry_days: 14, low_stock_days: 5, trend_up_pct: 25 }
+  }
+
+  const [thresholds, setThresholds] = useState(getInitialThresholds)
   const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState<{ type: 'success'|'error'; text: string } | null>(null)
+  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    api.getSalesMetrics().then(d => {
+      if (d && d.thresholds) {
+        setThresholds(d.thresholds)
+        localStorage.setItem('shelfsense_thresholds', JSON.stringify(d.thresholds))
+      }
+    }).catch(err => {
+      console.error('Error fetching settings thresholds on mount:', err)
+    })
+  }, [])
 
   async function save() {
     setSaving(true)
     try {
       await api.updateThresholds(thresholds)
-      setMsg({ type: 'success', text: 'Thresholds saved successfully.' })
-    } catch { setMsg({ type: 'error', text: 'Failed to save thresholds.' }) }
-    finally { setSaving(false); setTimeout(() => setMsg(null), 3000) }
+      localStorage.setItem('shelfsense_thresholds', JSON.stringify(thresholds))
+      setMsg({ type: 'success', text: '✅ Thresholds saved successfully!' })
+    } catch {
+      setMsg({ type: 'error', text: '❌ Failed to save thresholds.' })
+    } finally {
+      setSaving(false)
+      setTimeout(() => setMsg(null), 3000)
+    }
   }
 
   const sliders = [
     { key: 'near_expiry_days', label: 'Near Expiry Window', hint: 'Products expiring within this window get flagged for discount.', min: 3, max: 30, suffix: 'd' },
-    { key: 'low_stock_days',   label: 'Low Stock Threshold', hint: 'Products with fewer days of stock get flagged for restock.', min: 1, max: 14, suffix: 'd' },
-    { key: 'trend_up_pct',     label: 'Trending Up Threshold', hint: 'Sales must have grown by this % week-over-week to be "trending up".', min: 5, max: 100, suffix: '%' },
+    { key: 'low_stock_days', label: 'Low Stock Threshold', hint: 'Products with fewer days of stock get flagged for restock.', min: 1, max: 14, suffix: 'd' },
+    { key: 'trend_up_pct', label: 'Trending Up Threshold', hint: 'Sales must have grown by this % week-over-week to be "trending up".', min: 5, max: 100, suffix: '%' },
   ]
 
   const sysInfo = [
-    { label: 'YOLO Model',  value: 'YOLOv8 + ByteTrack', sub: 'final_best.pt' },
-    { label: 'LLM',         value: 'Groq OSS 120B',       sub: 'openai/gpt-oss-120b' },
-    { label: 'Scraper',     value: 'Playwright + BS4',     sub: 'Headless Chromium + JSON-LD' },
-    { label: 'Backend',     value: 'FastAPI + Uvicorn',    sub: 'localhost:8000' },
+    { label: 'YOLO Model', value: 'YOLOv8 + ByteTrack', sub: 'final_best.pt' },
+    { label: 'LLM', value: 'Groq OSS 120B', sub: 'openai/gpt-oss-120b' },
+    { label: 'Scraper', value: 'Playwright + BS4', sub: 'Headless Chromium + JSON-LD' },
+    { label: 'Backend', value: 'FastAPI + Uvicorn', sub: 'localhost:8000' },
   ]
 
   return (
@@ -154,7 +181,7 @@ export default function Settings() {
                 <input
                   type="range" min={s.min} max={s.max}
                   value={thresholds[s.key as keyof typeof thresholds]}
-                  onChange={e => setThresholds(t => ({ ...t, [s.key]: +e.target.value }))}
+                  onChange={e => setThresholds((t: any) => ({ ...t, [s.key]: +e.target.value }))}
                   className="w-full"
                 />
                 <p className="text-[11px] mt-1.5" style={{ color: '#374151' }}>{s.hint}</p>

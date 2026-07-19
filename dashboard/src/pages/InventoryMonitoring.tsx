@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Play, X } from 'lucide-react'
 import { api, type DetectionProgressEvent } from '../lib/api'
 import { useInventoryStore } from '../hooks/useInventoryStore'
+import { useNotificationStore } from '../hooks/useNotificationStore'
 import { Card, CardTitle } from '../components/ui/Card'
 import { Button, EmptyState, StatCard } from '../components/ui'
 import { Badge } from '../components/ui/Badge'
@@ -222,6 +223,11 @@ export default function InventoryMonitoring() {
           type: 'success',
           text: `Detection complete! Found ${skuCount} SKUs with ${inv.grand_total} total units.`,
         })
+        useNotificationStore.getState().addNotification(
+          'Inventory Scan Complete',
+          `Inventory scan completed successfully. Found ${skuCount} SKUs with ${inv.grand_total} total units.`,
+          'info'
+        )
       },
       (detail) => {
         setDetecting(false)
