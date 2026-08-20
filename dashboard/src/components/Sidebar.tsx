@@ -106,7 +106,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
             Tools
           </div>
         )}
-        {analyticsNav.map(item => <NavItem key={item.to} item={item} />)}
+        {toolsNav.map(item => <NavItem key={item.to} item={item} />)}
       </nav>
 
       {/* Footer — API status */}

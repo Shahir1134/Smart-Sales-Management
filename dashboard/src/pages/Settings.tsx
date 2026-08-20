@@ -5,7 +5,6 @@ import { Card, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui'
 import { Badge } from '../components/ui/Badge'
 import { Alert } from '../components/ui/Badge'
-import { Settings2, Key, Info } from 'lucide-react'
 
 export default function Settings() {
   const { data: health } = useHealth()

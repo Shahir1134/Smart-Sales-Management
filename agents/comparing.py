@@ -7,18 +7,20 @@ import os
 env_path = Path(__file__).resolve().parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-model = ChatGroq(
-    model="openai/gpt-oss-120b",
-    temperature=0.7,
-    api_key=os.getenv("GROQ_API_KEY"),
-    max_tokens=3000
-)
 
 def comparing_agent(results: list[dict]):
     """
     results: list of dicts, each with keys:
         'product', 'site', 'price', 'delivery', 'url'
     """
+    # Instantiate inside function so a missing API key doesn't crash the server on import
+    model = ChatGroq(
+        model="openai/gpt-oss-120b",
+        temperature=0.7,
+        api_key=os.getenv("GROQ_API_KEY"),
+        max_tokens=3000
+    )
+
     formatted_data = "\n".join(
         f"- Product: {r['product']}, Site: {r['site']}, Price: {r['price']}, "
         f"Delivery: {r['delivery']}, URL: {r['url']}"

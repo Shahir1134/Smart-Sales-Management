@@ -11,6 +11,7 @@ const variantStyles: Record<Variant, { bg: string; color: string; border: string
   cyan:   { bg: 'rgba(6,182,212,0.12)',   color: '#67E8F9', border: 'rgba(6,182,212,0.25)' },
   gray:   { bg: 'rgba(255,255,255,0.07)', color: '#94A3B8', border: 'rgba(255,255,255,0.12)' },
   pink:   { bg: 'rgba(236,72,153,0.12)',  color: '#F9A8D4', border: 'rgba(236,72,153,0.25)' },
+  indigo: { bg: 'rgba(99,102,241,0.12)',  color: '#818CF8', border: 'rgba(99,102,241,0.25)' },
 }
 
 export function Badge({ children, variant = 'gray', className }: { children: ReactNode; variant?: Variant; className?: string }) {

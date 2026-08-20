@@ -38,18 +38,21 @@ export function CardTitle({
   subtitle?: string
 }) {
   return (
-    <div className={cn('flex items-center gap-2.5 mb-4 font-heading font-bold text-[13px] tracking-wide', className)}
-      style={{ color: '#E2E8F0' }}
-    >
-      {icon && (
-        <span
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
-        >
-          {icon}
-        </span>
-      )}
-      {children}
+    <div className={cn('flex items-center justify-between mb-4', className)}>
+      <div className="flex items-center gap-2.5 font-heading font-bold text-[13px] tracking-wide" style={{ color: '#E2E8F0' }}>
+        {icon && (
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            {icon}
+          </span>
+        )}
+        <div>
+          <div>{children}</div>
+          {subtitle && <p className="text-[11px] font-normal text-gray-400 mt-0.5">{subtitle}</p>}
+        </div>
+      </div>
     </div>
   )
 }

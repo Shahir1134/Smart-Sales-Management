@@ -10,12 +10,10 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
-    allowedHosts: [
-      'hypnoses-coconut-gerbil.ngrok-free.dev'
-    ],
+    // For local dev only: proxy /api to the local FastAPI server
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: process.env.VITE_API_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Play, Search, Globe, Cpu, CheckCircle, Clock, ChevronRight } from 'lucide-react'
+import { Play, Search, Globe, Cpu, ChevronRight } from 'lucide-react'
 import { api, type PipelineEvent, type RestockRow } from '../lib/api'
 import { useInventoryStore } from '../hooks/useInventoryStore'
 import { Card, CardTitle } from '../components/ui/Card'
@@ -25,6 +25,8 @@ const STAGES = [
     icon: Cpu,
   },
 ]
+
+const STAGE_LABELS = STAGES.map(s => s.label)
 
 interface LogLine { time: string; stage: string; status: string; msg: string }
 
@@ -105,8 +107,6 @@ export default function CompetitorAnalysis() {
       bestPerProduct[r['Product Name']] = v
     }
   })
-
-  const isComplete = !running && results !== null
 
   return (
     <div className="space-y-6">

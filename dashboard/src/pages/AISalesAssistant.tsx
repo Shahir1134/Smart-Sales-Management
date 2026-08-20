@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Sparkles, Bot, TrendingUp, TrendingDown, CheckCircle2, Package } from 'lucide-react'
+import { Sparkles, TrendingUp, TrendingDown, CheckCircle2, Package } from 'lucide-react'
 import { api, type SalesMetricsResponse, type Recommendation } from '../lib/api'
 import { Card, CardTitle } from '../components/ui/Card'
 import { StatCard, LoadingState, Button, EmptyState } from '../components/ui'
@@ -51,13 +51,24 @@ export default function AISalesAssistant() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-heading font-extrabold text-[24px] tracking-tight" style={{ color: '#F1F5F9' }}>
-          🤖 AI Sales Assistant
-        </h1>
-        <p className="text-[13px] mt-1" style={{ color: '#475569' }}>
-          Rule-based triggers meet AI copy. Groq generates precise discount and restock messaging.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-heading font-extrabold text-[24px] tracking-tight" style={{ color: '#F1F5F9' }}>
+            🤖 AI Sales Assistant
+          </h1>
+          <p className="text-[13px] mt-1" style={{ color: '#475569' }}>
+            Rule-based triggers meet AI copy. Groq generates precise discount and restock messaging.
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          size="sm"
+          icon={<Sparkles size={14} />}
+          loading={genLoading}
+          onClick={generate}
+        >
+          Generate AI Copy
+        </Button>
       </div>
 
       {/* KPIs */}
@@ -183,8 +194,4 @@ export default function AISalesAssistant() {
       )}
     </div>
   )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }

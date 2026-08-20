@@ -10,7 +10,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from 'recharts'
 
-const COLORS = ['#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#EC4899']
+const CHART_COLORS = ['#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#EC4899']
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState<SalesMetricsResponse | null>(null)

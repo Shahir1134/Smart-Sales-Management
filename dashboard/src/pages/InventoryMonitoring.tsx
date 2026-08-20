@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Play, X } from 'lucide-react'
+import { Play, X, CheckCircle2, Package, AlertCircle } from 'lucide-react'
 import { api, type DetectionProgressEvent } from '../lib/api'
 import { useInventoryStore } from '../hooks/useInventoryStore'
 import { useNotificationStore } from '../hooks/useNotificationStore'
@@ -77,7 +77,7 @@ function FrameProgress({ frame, total, pct, onCancel }: FrameProgressProps) {
         </div>
         <div className="font-mono-custom text-[20px] font-bold tabular-nums" style={{ color: '#94A3B8' }}>
           {pct.toFixed(1)}%
-        </span>
+        </div>
       </div>
 
       {/* Progress bar */}

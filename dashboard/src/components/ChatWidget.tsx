@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send } from 'lucide-react'
+import { MessageCircle, X, Send, Zap } from 'lucide-react'
 import { api } from '../lib/api'
 import { cn } from '../lib/utils'
 import { Spinner } from './ui'

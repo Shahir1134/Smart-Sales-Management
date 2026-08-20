@@ -11,7 +11,13 @@ import {
   CartesianGrid, Legend, BarChart, Bar, Cell
 } from 'recharts'
 
-const COLORS = ['#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#EC4899']
+const CHART_COLORS = ['#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#EC4899']
+
+const thresholdFields = [
+  { key: 'near_expiry_days', label: 'Near Expiry (days)', min: 3, max: 30, suffix: 'd' },
+  { key: 'low_stock_days',   label: 'Low Stock (days left)', min: 1, max: 14, suffix: 'd' },
+  { key: 'trend_up_pct',     label: 'Trending Up (%)', min: 5, max: 100, suffix: '%' },
+]
 
 export default function SalesPrediction() {
   const [data, setData] = useState<SalesMetricsResponse | null>(null)
@@ -142,7 +148,7 @@ export default function SalesPrediction() {
               {products.slice(0, 6).map((p, i) => (
                 <Line
                   key={p} type="monotone" dataKey={p}
-                  stroke={CHART_COLORS[i]} strokeWidth={1.5} dot={false} name={p}
+                  stroke={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={1.5} dot={false} name={p}
                   activeDot={{ r: 4, strokeWidth: 0 }}
                 />
               ))}
@@ -158,11 +164,9 @@ export default function SalesPrediction() {
               <XAxis type="number" tick={{ fontSize: 10, fill: '#475569' }} tickLine={false} axisLine={false} />
               <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: '#6B7280' }} width={80} axisLine={false} tickLine={false} />
               <Tooltip formatter={(v: unknown) => fmtPct(v as number)} contentStyle={chartTooltipStyle} />
-              <Bar dataKey="trend" name="Trend %"
-                fill="#8B5CF6" radius={[0, 4, 4, 0]}
+              <Bar dataKey="trend" name="Trend %" radius={[0, 4, 4, 0]}
                 label={{ position: 'right', fontSize: 10, fill: '#475569', formatter: (v: unknown) => fmtPct(v as number) }}
-              />
-              <Bar dataKey="trend" name="Trend %" radius={[0, 4, 4, 0]}>
+              >
                 {trendData.map((entry, i) => (
                   <Cell
                     key={`cell-${i}`}

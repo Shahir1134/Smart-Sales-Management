@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Download, FileText, TrendingUp, TrendingDown, Package, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Download, Package, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react'
 import { api, type SalesMetricsResponse, type ProductMaster } from '../lib/api'
 import { Card, CardTitle } from '../components/ui/Card'
 import { StatCard, LoadingState, Button } from '../components/ui'
@@ -47,7 +47,6 @@ export default function Reports() {
   const discountCount = data?.discount_triggers.length ?? 0
   const restockCount = data?.restock_triggers.length ?? 0
   const totalProducts = data ? Object.keys(data.metrics).length : 0
-  const healthScore = totalProducts > 0 ? Math.round((healthyCount / totalProducts) * 100) : 0
 
   return (
     <div className="space-y-6">

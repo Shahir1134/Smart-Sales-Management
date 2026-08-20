@@ -250,6 +250,7 @@ export const api = {
   clearChat: (): Promise<{ status: string }> =>
     http.delete('/chat').then(r => r.data),
 
-  /** Returns an EventSource URL for SSE — caller manages the stream */
-  pipelineUrl: (threshold = 70): string => `/api/restock/pipeline?threshold=${threshold}`,
+  /** Returns a full SSE URL for the restock pipeline — caller manages the stream */
+  pipelineUrl: (threshold = 70): string =>
+    `${import.meta.env.VITE_API_URL}/api/restock/pipeline?threshold=${threshold}`,
 }
